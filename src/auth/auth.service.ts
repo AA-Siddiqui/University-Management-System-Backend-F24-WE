@@ -34,7 +34,7 @@ export class AuthService {
     //   { id: 1, username: 'test', password: await bcrypt.hash('test', 10) },
     //   { id: 2, username: 'test1', password: await bcrypt.hash('test', 10) },
     // ]
-    // const user = mockUsersfiltr((user) => username === user.username)[0];
+    // const user = mockUsersfitr((user) => username === user.username)[0];
     return user;
   }
 }

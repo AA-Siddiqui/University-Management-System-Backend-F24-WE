@@ -20,9 +20,9 @@ import { Submission } from './entities/submission.entity';
 import { SubmissionFile } from './entities/submissionFile.entity';
 import { Teacher } from './entities/teacher.entity';
 import { User } from './entities/user.entity';
-import { DepartmentController } from './department/department.controller';
 import { DepartmentModule } from './department/department.module';
 import { StudentModule } from './student/student.module';
+import { TeacherModule } from './teacher/teacher.module';
 
 const entityList = [
   Department,
@@ -78,7 +78,8 @@ const entityList = [
     // TypeOrmModule.forFeature(entityList),
     AuthModule,
     DepartmentModule,
-    StudentModule
+    StudentModule,
+    TeacherModule
   ],
   controllers: [AppController],
   providers: [AppService],

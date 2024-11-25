@@ -17,4 +17,10 @@ export class Assessment {
 
   @Column()
   deadline: Date;
+
+  @Column()
+  max: number;
+
+  @Column()
+  weight: number;
 }

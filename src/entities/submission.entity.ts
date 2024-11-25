@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, Column } from 'typeorm';
 import { Student } from './student.entity';
 import { Assessment } from './assessment.entity';
 
@@ -12,4 +12,7 @@ export class Submission {
 
   @ManyToOne(() => Assessment, (assessment: Assessment) => assessment.assessmentID)
   assessmentID: number;
+
+  @Column()
+  marks: number;
 }

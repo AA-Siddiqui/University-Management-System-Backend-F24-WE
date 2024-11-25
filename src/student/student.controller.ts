@@ -5,7 +5,7 @@ import { StudentService } from './student.service';
 export class StudentController {
   constructor(private readonly studentService: StudentService) { }
 
-  @Get(":id")
+  @Get("dashboard/:id")
   async getStudent(@Param('id') id: number) {
     return await this.studentService.getStudent(id);
   }

@@ -14,4 +14,7 @@ export class Program {
 
   @Column()
   name: string;
+
+  @Column()
+  totalCreditHrs: string;
 }
