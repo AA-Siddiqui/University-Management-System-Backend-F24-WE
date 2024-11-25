@@ -10,8 +10,8 @@ export class AuthController {
   async login(@Body() body: { username: string; password: string }) {
     const user = await this.authService.validateUser(body.username, body.password);
     const ret = await this.authService.login(user);
-    const final = {access_token: ret.access_token, role: 1};
-    return final;
+    // const final = {access_token: ret.access_token, role: 3};
+    return ret;
   }
 
   @UseGuards(JwtAuthGuard)

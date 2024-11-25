@@ -14,4 +14,13 @@ export class Invoice {
 
   @Column()
   amount: number;
+
+  @Column()
+  dueDate: Date;
+
+  @Column()
+  paidDate: Date;
+
+  @Column()
+  term: string;
 }

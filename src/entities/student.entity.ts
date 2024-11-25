@@ -7,7 +7,7 @@ export class Student {
   @PrimaryGeneratedColumn()
   studentID: number;
 
-  @OneToOne(() => User, (user: User) => user.userID)
+  @ManyToOne(() => User, (user: User) => user.userID)
   userID: number;
 
   @ManyToOne(() => Program, (program: Program) => program.programID)
