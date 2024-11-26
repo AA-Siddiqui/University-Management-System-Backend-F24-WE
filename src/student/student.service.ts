@@ -151,7 +151,6 @@ export class StudentService {
     );
     // TODO: Improve this by checking if there is a submission agianst this activity
 
-    console.log(activities);
     return {activities};
   }
 
