@@ -68,7 +68,7 @@ export class TeacherService {
     const teacher = await this.teacherRespository.findOne({ where: { userID: user.userID } });
 
     const data = await this.connection.query(`
-      SELECT a.title as assessmentMode, a.max, a.weight FROM Assessment a
+      SELECT a.assessmentID, a.title as assessmentMode, a.max, a.weight FROM Assessment a
       WHERE a.classIDClassID = ${classID}
     `);
 
@@ -109,5 +109,66 @@ export class TeacherService {
     }
     
     return {data: [{title: "Assessment", details: assessments}, {title: "Course Material", details: courseMaterial}]};
+  }
+
+  async getAttendanceListData(userID: number, scheduleID: number) {
+    const user = await this.userRespository.findOne({ where: { userID: userID } });
+    const teacher = await this.teacherRespository.findOne({ where: { userID: user.userID } });
+
+    const headData = await this.connection.query(`
+      SELECT cc.name, c.term, Date(s.startTime) as date FROM Schedule s
+      JOIN Class c ON c.classID = s.classIDClassID
+      JOIN Course cc ON cc.courseID = c.courseIDCourseID
+      WHERE s.scheduleID = ${scheduleID}
+    `);
+
+    const bodyData = await this.connection.query(`
+      SELECT u.name, st.studentID, st.rollNo as roll, a.present FROM Schedule s
+      JOIN Attendance a ON a.scheduleIDScheduleID = s.scheduleID
+      JOIN Student st ON st.studentID = a.studentIDStudentID
+      JOIN User u ON u.userID = st.userIDUserID
+      WHERE s.scheduleID = ${scheduleID}
+    `);
+
+    return {headData, bodyData}
+  }
+
+  async putAttendanceListData(userID: number, scheduleID: number, studentID: number) {
+    await this.connection.query(`
+      UPDATE Attendance a
+      SET a.present = NOT a.present
+      WHERE a.scheduleIDScheduleID = ${scheduleID} AND a.studentIDStudentID = ${studentID}
+    `);
+  }
+
+  async getGradeListData(userID: number, assessmentID: number) {
+    const user = await this.userRespository.findOne({ where: { userID: userID } });
+    const teacher = await this.teacherRespository.findOne({ where: { userID: user.userID } });
+
+    const headData = await this.connection.query(`
+      SELECT cc.name, c.term, a.title as date FROM Assessment a
+      JOIN Class c ON c.classID = a.classIDClassID
+      JOIN Course cc ON cc.courseID = c.courseIDCourseID
+      WHERE a.assessmentID = ${assessmentID}
+    `);
+
+    const bodyData = await this.connection.query(`
+      SELECT s.submissionID, u.name, st.studentID, st.rollNo as roll, s.marks FROM Assessment aa
+      JOIN Submission s ON aa.assessmentID = s.assessmentIDAssessmentID
+      JOIN Student st ON st.studentID = s.studentIDStudentID
+      JOIN User u ON u.userID = st.userIDUserID
+      WHERE aa.assessmentID = ${assessmentID}
+    `);
+    console.log(bodyData[0].marks);
+
+    return {headData, bodyData}
+  }
+
+  async putGradeListData(assessmentID: number, body: {studentID: number, marks: number}) {
+    await this.connection.query(`
+      UPDATE Submission s
+      SET s.marks = ${body.marks}
+      WHERE s.assessmentIDAssessmentID = ${assessmentID} AND s.studentIDStudentID = ${body.studentID}
+    `);
   }
 }
