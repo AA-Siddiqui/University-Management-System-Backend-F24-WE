@@ -58,7 +58,7 @@ VALUES
     (1, 1, 10),
     (1, 2, 10),
     (2, 1, 7),
-    (3, 2, -1);
+    (3, 2, 0);
 
 INSERT INTO Schedule (classIDClassID, startTime, endTime, venue)
 VALUES

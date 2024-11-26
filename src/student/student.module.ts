@@ -8,6 +8,7 @@ import { Invoice } from 'src/entities/invoice.entity';
 import { Program } from 'src/entities/program.entity';
 import { Enrollment } from 'src/entities/enrollment.entity';
 import { Class } from 'src/entities/class.entity';
+import { Request } from 'src/entities/request.entity';
 
 // const entityList = [
 //   Department,
@@ -29,7 +30,7 @@ import { Class } from 'src/entities/class.entity';
 //   SubmissionFile,
 // ];
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Student, Invoice, Program, Enrollment, Class])],
+  imports: [TypeOrmModule.forFeature([User, Student, Invoice, Program, Enrollment, Class, Request])],
   controllers: [StudentController],
   providers: [StudentService]
 })

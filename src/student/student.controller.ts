@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
 import { StudentService } from './student.service';
 
 @Controller('student')
@@ -18,5 +18,23 @@ export class StudentController {
   @Get("upcomingActivities/:id")
   async getUpcomingActivites(@Param('id') id: number) {
     return await this.studentService.getUpcomingActivities(id);
+  }
+
+  @Get("results/:id")
+  async getResults(@Param('id') id: number) {
+    return await this.studentService.getResults(id);
+  }
+
+  @Get("enroll/:id")
+  async getEnrollables(@Param('id') id: number) {
+    return await this.studentService.getEnrollables(id);
+  }
+
+  @Post("enroll/:studentID&:classID")
+  async sendEnrollmentRequest(
+    @Param('studentID') studentID: number,
+    @Param('classID') classID: number,
+  ) {
+    return this.studentService.sendEnrollmentRequest(studentID, classID);
   }
 }

@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { Class } from 'src/entities/class.entity';
 import { Invoice } from 'src/entities/invoice.entity';
 import { Program } from 'src/entities/program.entity';
+import { Request } from 'src/entities/request.entity';
 import { Student } from 'src/entities/student.entity';
 import { User } from 'src/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
 
+const currentTerm = "'Summer 2024'";
 @Injectable()
 export class StudentService {
   constructor(
@@ -13,6 +16,8 @@ export class StudentService {
     @InjectRepository(Student) private readonly studentRespository: Repository<Student>,
     @InjectRepository(Invoice) private readonly invoiceRespository: Repository<Invoice>,
     @InjectRepository(Program) private readonly programRespository: Repository<Program>,
+    @InjectRepository(Class) private readonly classRespository: Repository<Class>,
+    @InjectRepository(Request) private readonly requestRespository: Repository<Request>,
     @InjectDataSource() private readonly connection: DataSource,
   ) { }
 
@@ -94,7 +99,7 @@ export class StudentService {
         JOIN Submission s on s.assessmentIDAssessmentID = a.assessmentID
         WHERE s.studentIDStudentID = ${courses[i].studentID}`
       );
-      
+
       let obtained = 0;
       let total = 0;
       for (let j = 0; j < grade.length; j++) {
@@ -132,8 +137,8 @@ export class StudentService {
       completedCredits: completedCreditHrs[0].totalCompletedCreditHours,
       courses: courses,
       requests: requests.map((request) => {
-        if (request.approved === null) return {class: request.class, judged: false, approved: false};
-        return {class: request.class, judged: true, approved: request.approved};
+        if (request.approved === null) return { class: request.class, judged: false, approved: false };
+        return { class: request.class, judged: true, approved: request.approved };
       })
     };
   }
@@ -151,7 +156,7 @@ export class StudentService {
     );
     // TODO: Improve this by checking if there is a submission agianst this activity
 
-    return {activities};
+    return { activities };
   }
 
   async getInvoice(id: number) {
@@ -159,5 +164,95 @@ export class StudentService {
     const student = await this.studentRespository.findOne({ where: { userID: user.userID } });
     const invoices = await this.invoiceRespository.find({ where: { studentID: student.studentID } });
     return invoices;
+  }
+
+  async getResults(id: number) {
+    const user = await this.userRespository.findOne({ where: { userID: id } });
+    const student = await this.studentRespository.findOne({ where: { userID: user.userID } });
+    const grade = await this.connection.query(`
+      WITH CompletedClasses AS (
+        SELECT
+        c.classID,
+        cc.creditHr,
+        cc.name
+        FROM
+        Class c
+        INNER JOIN Schedule s ON c.classID = s.classIDClassID
+        INNER JOIN Course cc ON c.courseIDCourseID = cc.courseID
+        WHERE
+          Date(s.endTime) < CURDATE()
+      GROUP BY c.classID
+      HAVING
+      COUNT(*) = SUM(CASE WHEN Date(s.endTime) < CURDATE() THEN 1 ELSE 0 END)
+      )
+      SELECT x.name, sum(s.marks / a.max * a.weight) as marks, sum(a.weight) as weight FROM Assessment a
+        JOIN CompletedClasses x on x.classID = a.classIDClassID
+        JOIN Submission s on s.assessmentIDAssessmentID = a.assessmentID
+        WHERE s.studentIDStudentID = ${student.studentID}
+        GROUP BY x.name`
+    );
+
+    const getGrade = (marks: number) => {
+      if (marks >= 85) return "A+";
+      else if (marks >= 80) return "A";
+      else if (marks >= 75) return "B+";
+      else if (marks >= 71) return "B";
+      else if (marks >= 68) return "B-";
+      else if (marks >= 64) return "C+";
+      else if (marks >= 61) return "C";
+      else if (marks >= 58) return "C-";
+      else if (marks >= 54) return "D+";
+      else if (marks >= 50) return "D";
+      return "F";
+    }
+
+    const data = grade.map((course: typeof grade[0]) => {
+      return {
+        title: course.name,
+        marks: Number(course.marks) / Number(course.weight) * 100,
+        grade: getGrade(Number(course.marks) / Number(course.weight) * 100)
+      };
+    });
+
+    return { data };
+  }
+
+  async getEnrollables(id: number) {
+    const user = await this.userRespository.findOne({ where: { userID: id } });
+    const student = await this.studentRespository.findOne({ where: { userID: user.userID } });
+    const enrollables = await this.connection.query(
+      `
+      SELECT u.name as instructor, cc.name as title, c.section, c.classID FROM Class c
+      JOIN Course cc ON cc.courseID = c.courseIDCourseID
+      JOIN Teacher t ON t.teacherID = c.teacherIDTeacherID
+      JOIN User u ON u.userID = t.userIDUserID
+      WHERE c.term = ${currentTerm} AND cc.courseID NOT IN (
+        SELECT cc.courseID FROM Enrollment e
+        JOIN Class c ON c.classID = e.classIDClassID
+        JOIN Course cc ON cc.courseID = c.courseIDCourseID
+        WHERE e.studentIDStudentID = ${student.studentID}
+      )
+      `
+    );
+
+    // const data = await enrollables.map(async (course) => {
+    for (let i = 0; i < enrollables.length; i++) {
+      const schedule = await this.connection.query(`
+        SELECT DISTINCT WEEKDAY(s.startTime) as day,Time(s.startTime) as startTime, Time(s.endTime) as endTime, s.venue FROM Schedule s
+        WHERE s.classIDClassID = ${enrollables[i].classID}
+        `);
+        enrollables[i] = {...enrollables[i], schedule}
+    }
+    
+    return {data: enrollables};
+  }
+
+  async sendEnrollmentRequest(studentID: number, classID: number) {
+    const request = {studentID, classID}
+    if (this.studentRespository.exists({where: {studentID}}) && this.classRespository.exists({where: {classID}})) {
+      this.requestRespository.save(request);
+      return {message: "Success"};
+    }
+    return {message: "IDs doesn't exist"};
   }
 }
