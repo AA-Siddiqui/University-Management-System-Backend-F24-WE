@@ -14,4 +14,9 @@ export class StudentController {
   async getInvoice(@Param('id') id: number) {
     return await this.studentService.getInvoice(id);
   }
+
+  @Get("upcomingActivities/:id")
+  async getUpcomingActivites(@Param('id') id: number) {
+    return await this.studentService.getUpcomingActivities(id);
+  }
 }

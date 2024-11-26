@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, Column } from 'typeorm';
 import { Student } from './student.entity';
 import { Class } from './class.entity';
 
@@ -12,4 +12,7 @@ export class Request {
 
   @ManyToOne(() => Class, (classI: Class) => classI.classID)
   classID: number;
+
+  @Column({ nullable: true })
+  approved: boolean;
 }

@@ -56,6 +56,7 @@ VALUES
 INSERT INTO Submission (studentIDStudentID, assessmentIDAssessmentID, marks)
 VALUES
     (1, 1, 10),
+    (1, 2, 10),
     (2, 1, 7),
     (3, 2, -1);
 
@@ -90,11 +91,11 @@ VALUES
     (1, 'Fee', 40000, '2024-10-10', '2024-10-12', 'Spring 24'),
     (2, 'Fee', 40000, '2024-10-10', '2024-10-12', 'Spring 24');
 
-INSERT INTO Request (studentIDStudentID, classIDClassID) 
+INSERT INTO Request (studentIDStudentID, classIDClassID, approved) 
 VALUES
-    (3, 1),
-    (3, 1),
-    (3, 2);
+    (3, 1, NULL),
+    (3, 3, TRUE),
+    (3, 2, FALSE);
 
 INSERT INTO Submission_file (submissionIDSubmissionID, name)
 VALUES
