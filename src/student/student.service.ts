@@ -250,7 +250,10 @@ export class StudentService {
     return { data: enrollables };
   }
 
-  async sendEnrollmentRequest(studentID: number, classID: number) {
+  async sendEnrollmentRequest(userID: number, classID: number) {
+    const user = await this.userRespository.findOne({ where: { userID: userID } });
+    const student = await this.studentRespository.findOne({ where: { userID: user.userID } });
+    const studentID = student.studentID;
     const request = { studentID, classID }
     if (this.studentRespository.exists({ where: { studentID } }) && this.classRespository.exists({ where: { classID } })) {
       this.requestRespository.save(request);
@@ -259,7 +262,10 @@ export class StudentService {
     return { message: "IDs doesn't exist" };
   }
 
-  async getAttendances(studentID: number, classID: number) {
+  async getAttendances(userID: number, classID: number) {
+    const user = await this.userRespository.findOne({ where: { userID: userID } });
+    const student = await this.studentRespository.findOne({ where: { userID: user.userID } });
+    const studentID = student.studentID;
     const data = await this.connection.query(`
         SELECT a.present, Date(s.startTime) as date FROM Attendance a
         JOIN Schedule s ON a.scheduleIDScheduleID = s.scheduleID
@@ -269,7 +275,10 @@ export class StudentService {
     return { data };
   }
 
-  async getCourseResults(studentID: number, classID: number) {
+  async getCourseResults(userID: number, classID: number) {
+    const user = await this.userRespository.findOne({ where: { userID: userID } });
+    const student = await this.studentRespository.findOne({ where: { userID: user.userID } });
+    const studentID = student.studentID;
     const data = await this.connection.query(`
       SELECT a.title, s.marks AS obtained, a.max AS maximum, a.weight FROM Assessment a
       JOIN Submission s ON s.assessmentIDAssessmentID = a.assessmentID
@@ -285,7 +294,7 @@ export class StudentService {
     return { data, totalPercentage };
   }
 
-  async getActivities(studentID: number, classID: number) {
+  async getActivities(userID: number, classID: number) {
     // [
     //   {
     //     title: "Assessment", details: [
@@ -301,6 +310,9 @@ export class StudentService {
     //   },
     // ]
     // JOIN Assessment_File af ON af.assessmentIDAssessmentID = a.assessmentID
+    const user = await this.userRespository.findOne({ where: { userID: userID } });
+    const student = await this.studentRespository.findOne({ where: { userID: user.userID } });
+    const studentID = student.studentID;
     const assessments = await this.connection.query(`
       SELECT a.assessmentID, a.title, a.description, a.deadline as date, a.weight FROM Assessment a
       WHERE a.classIDClassID = ${classID} AND a.weight > 0
@@ -333,8 +345,8 @@ export class StudentService {
     return {data: [{title: "Assessment", details: assessments}, {title: "Course Material", details: courseMaterial}]};
   }
 
-  async getCourseHeaderData(studentID: number, classID: number) {
-    return ((await this.getStudent(studentID)).courses.find((course) => course.classID == classID));
+  async getCourseHeaderData(userID: number, classID: number) {
+    return ((await this.getStudent(userID)).courses.find((course) => course.classID == classID));
   }
 
   async getSubmissionPageData(assessmentID: number) {
@@ -348,7 +360,10 @@ export class StudentService {
     return data[0];
   }
 
-  async dealWithSubmission(file: Express.Multer.File, assessmentID: number, studentID: number) {
+  async dealWithSubmission(file: Express.Multer.File, assessmentID: number, userID: number) {
+    const user = await this.userRespository.findOne({ where: { userID: userID } });
+    const student = await this.studentRespository.findOne({ where: { userID: user.userID } });
+    const studentID = student.studentID;
     const submission = await this.connection.query(`
       INSERT INTO Submission(studentIDStudentID, assessmentIDAssessmentID, marks)
       VALUES
