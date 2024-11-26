@@ -231,6 +231,9 @@ export class StudentService {
         JOIN Class c ON c.classID = e.classIDClassID
         JOIN Course cc ON cc.courseID = c.courseIDCourseID
         WHERE e.studentIDStudentID = ${student.studentID}
+      ) AND c.classID NOT IN (
+        SELECT r.classIDClassID FROM Request r
+        WHERE r.studentIDStudentID = ${student.studentID}
       )
       `
     );
@@ -241,18 +244,120 @@ export class StudentService {
         SELECT DISTINCT WEEKDAY(s.startTime) as day,Time(s.startTime) as startTime, Time(s.endTime) as endTime, s.venue FROM Schedule s
         WHERE s.classIDClassID = ${enrollables[i].classID}
         `);
-        enrollables[i] = {...enrollables[i], schedule}
+      enrollables[i] = { ...enrollables[i], schedule }
     }
-    
-    return {data: enrollables};
+
+    return { data: enrollables };
   }
 
   async sendEnrollmentRequest(studentID: number, classID: number) {
-    const request = {studentID, classID}
-    if (this.studentRespository.exists({where: {studentID}}) && this.classRespository.exists({where: {classID}})) {
+    const request = { studentID, classID }
+    if (this.studentRespository.exists({ where: { studentID } }) && this.classRespository.exists({ where: { classID } })) {
       this.requestRespository.save(request);
-      return {message: "Success"};
+      return { message: "Success" };
     }
-    return {message: "IDs doesn't exist"};
+    return { message: "IDs doesn't exist" };
   }
+
+  async getAttendances(studentID: number, classID: number) {
+    const data = await this.connection.query(`
+        SELECT a.present, Date(s.startTime) as date FROM Attendance a
+        JOIN Schedule s ON a.scheduleIDScheduleID = s.scheduleID
+        JOIN Class c ON c.classID = s.classIDClassID
+        WHERE c.classID = ${classID} AND a.studentIDStudentID = ${studentID}
+    `);
+    return { data };
+  }
+
+  async getCourseResults(studentID: number, classID: number) {
+    const data = await this.connection.query(`
+      SELECT a.title, s.marks AS obtained, a.max AS maximum, a.weight FROM Assessment a
+      JOIN Submission s ON s.assessmentIDAssessmentID = a.assessmentID
+      WHERE a.classIDClassID = ${classID} AND s.studentIDStudentID = ${studentID}
+    `);
+    let obtained = 0;
+    let weight = 0;
+    for (let i = 0; i < data.length; i++) {
+      obtained += data[i].obtained / data[i].maximum * data[i].weight;
+      weight += data[i].weight;
+    }
+    const totalPercentage = obtained / weight * 100;
+    return { data, totalPercentage };
+  }
+
+  async getActivities(studentID: number, classID: number) {
+    // [
+    //   {
+    //     title: "Assessment", details: [
+    //       { title: "Quiz 1", date: "Aug 17th, 2024", weight: 5, submittable: false, done: false },
+    //       { title: "Assignment 1", date: "Aug 19th, 2024", weight: 5, files: ["File1.docx", "File2.pdf", "File3.pptx"], submittable: true, done: false },
+    //     ]
+    //   },
+    //   {
+    //     title: "Course Material", details: [
+    //       { title: "Lecture 1", date: "Aug 10th, 2024", submittable: false },
+    //       { title: "Lecture 2", date: "Aug 12th, 2024", submittable: false },
+    //     ]
+    //   },
+    // ]
+    // JOIN Assessment_File af ON af.assessmentIDAssessmentID = a.assessmentID
+    const assessments = await this.connection.query(`
+      SELECT a.assessmentID, a.title, a.description, a.deadline as date, a.weight FROM Assessment a
+      WHERE a.classIDClassID = ${classID} AND a.weight > 0
+    `);
+    for (let i = 0; i < assessments.length; i++) {
+      const files = await this.connection.query(`
+        SELECT af.name FROM Assessment_File af
+        WHERE af.assessmentIDAssessmentID = ${assessments[i].assessmentID}
+      `);
+      const done = await this.connection.query(`
+        SELECT COUNT(*) as n from Submission s
+        JOIN Assessment a ON s.assessmentIDAssessmentID = a.assessmentID
+        WHERE s.studentIDStudentID = ${studentID} AND a.classIDClassID = ${classID}
+      `)
+      
+      assessments[i] = {...assessments[i], files: files.map((file) => file.name), submittable: (Number(done.n) === 0), done: (Number(done.n) > 0)}
+    }
+    const courseMaterial = await this.connection.query(`
+      SELECT a.assessmentID, a.title, a.description, Date(a.deadline) as date, a.weight FROM Assessment a
+      WHERE a.classIDClassID = ${classID} AND a.weight = 0
+    `);
+    for (let i = 0; i < courseMaterial.length; i++) {
+      const files = await this.connection.query(`
+        SELECT af.name FROM Assessment_File af
+        WHERE af.assessmentIDAssessmentID = ${courseMaterial[i].assessmentID}
+      `)
+      courseMaterial[i] = {...courseMaterial[i], submittable: false, files: files.map((file) => file.name)}
+    }
+    
+    return {data: [{title: "Assessment", details: assessments}, {title: "Course Material", details: courseMaterial}]};
+  }
+
+  async getCourseHeaderData(studentID: number, classID: number) {
+    return ((await this.getStudent(studentID)).courses.find((course) => course.classID == classID));
+  }
+
+  async getSubmissionPageData(assessmentID: number) {
+    const data = await this.connection.query(`
+      SELECT a.title, a.deadline, cc.name FROM Assessment a
+      JOIN Class c ON a.classIDClassID = c.classID
+      JOIN Course cc ON cc.courseID = c.courseIDCourseID
+      WHERE a.assessmentID = ${assessmentID}
+    `);
+    
+    return data[0];
+  }
+
+  async dealWithSubmission(file: Express.Multer.File, assessmentID: number, studentID: number) {
+    const submission = await this.connection.query(`
+      INSERT INTO Submission(studentIDStudentID, assessmentIDAssessmentID, marks)
+      VALUES
+        (${studentID}, ${assessmentID}, 0)
+    `);
+    const submissionFile = await this.connection.query(`
+      INSERT INTO Submission_File(submissionIDSubmissionID, name)
+      VALUES
+        (${submission.insertId}, '${file.originalname}')
+    `);
+  } 
 }
