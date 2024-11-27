@@ -159,7 +159,6 @@ export class TeacherService {
       JOIN User u ON u.userID = st.userIDUserID
       WHERE aa.assessmentID = ${assessmentID}
     `);
-    console.log(bodyData[0].marks);
 
     return {headData, bodyData}
   }
@@ -171,4 +170,6 @@ export class TeacherService {
       WHERE s.assessmentIDAssessmentID = ${assessmentID} AND s.studentIDStudentID = ${body.studentID}
     `);
   }
+
+  // TODO: Activity page
 }

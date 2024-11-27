@@ -82,6 +82,9 @@ export class TeacherController {
   @Get('course/grade/:submissionID')
   async getFile(@Param('submissionID') submissionID: number, @Res() res: Response) {
     const filePath = join(__dirname, '..', '..', 'submission', submissionID.toString());
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException("File Not Found");
+    }
     fs.readdir(filePath, (err, files) => {
       files.forEach(file => {
         if (!fs.existsSync(join(filePath, file))) {

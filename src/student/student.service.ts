@@ -280,9 +280,10 @@ export class StudentService {
     const student = await this.studentRespository.findOne({ where: { userID: user.userID } });
     const studentID = student.studentID;
     const data = await this.connection.query(`
-      SELECT a.title, s.marks AS obtained, a.max AS maximum, a.weight FROM Assessment a
+      SELECT a.assessmentID, a.title, s.marks AS obtained, a.max AS maximum, a.weight FROM Assessment a
       JOIN Submission s ON s.assessmentIDAssessmentID = a.assessmentID
       WHERE a.classIDClassID = ${classID} AND s.studentIDStudentID = ${studentID}
+      GROUP BY a.assessmentID
     `);
     let obtained = 0;
     let weight = 0;

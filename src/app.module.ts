@@ -23,6 +23,7 @@ import { User } from './entities/user.entity';
 import { DepartmentModule } from './department/department.module';
 import { StudentModule } from './student/student.module';
 import { TeacherModule } from './teacher/teacher.module';
+import { AdminModule } from './admin/admin.module';
 
 const entityList = [
   Department,
@@ -79,7 +80,8 @@ const entityList = [
     AuthModule,
     DepartmentModule,
     StudentModule,
-    TeacherModule
+    TeacherModule,
+    AdminModule
   ],
   controllers: [AppController],
   providers: [AppService],
