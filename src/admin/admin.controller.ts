@@ -74,4 +74,14 @@ export class AdminController {
   ) {
     return this.adminService.addFeesStudent(formData);
   }
+
+  @Post('fees/add/term/:term&:amount&:description&:dueDate')
+  async generateFeeForTerm(
+    @Param('term') term: string,
+    @Param('amount') amount: number,
+    @Param('description') description: string,
+    @Param('dueDate') dueDate: string,
+  ) {
+    return await this.adminService.generateFeeForTerm(term, amount, description, dueDate);
+  }
 }

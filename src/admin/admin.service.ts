@@ -57,7 +57,7 @@ export class AdminService {
         FROM Request rq
         WHERE rq.requestID = ${requestID}`
       );
-      
+
       const { studentIDStudentID, classIDClassID } = result[0];
 
       await this.connection.query(`
@@ -134,11 +134,15 @@ export class AdminService {
   }
 
   async clearFees(invoiceID: number, amount: number) {
-    // const studentID = (await this.getNameByRollNo(rollNo)).studentID;
-    // console.log(studentID, invoiceID, amount);
+    ;
     const data = await this.connection.query(`
+      SELECT inv.amount FROM Invoice inv
+      WHERE inv.invoiceID = ${invoiceID}
+    `);
+
+    await this.connection.query(`
       UPDATE Invoice inv
-      SET inv.amount = inv.amount - ${amount}
+      SET inv.amount = inv.amount - ${amount}${(data[0].amount - amount <= 0) ? ', inv.paidDate = CURDATE()' : ''}
       WHERE inv.invoiceID = ${invoiceID}
     `);
   }
@@ -150,11 +154,63 @@ export class AdminService {
 
 
     await this.connection.query(`
-      INSERT INTO Invoice (studentIDStudentID, description, amount, term)
+      INSERT INTO Invoice (studentIDStudentID, description, amount, term, dueDate)
       VALUES
-        (${studentID}, '${data.description}', ${data.amount}, '${data.term}')
+        (${studentID}, '${data.description}', ${data.amount}, '${data.term}', ${data.dueDate})
     `);
 
     return { message: "Success" };
   }
+
+  async generateFeeForTerm(term: string, amount: number, description: string, dueDate: string) {
+    const result = await this.connection.query(`
+      WITH Class_Credit_Hours AS (
+          SELECT
+              c.classID,
+              SUM(co.creditHr) AS totalCreditHours
+          FROM
+              Class c
+          JOIN Course co ON c.courseIDCourseID = co.courseID
+          WHERE
+              c.term = '${term}'
+          GROUP BY
+              c.classID
+      ),
+
+      Student_Invoice_Data AS (
+          SELECT
+              s.studentID as sid,
+              cch.totalCreditHours,
+              (cch.totalCreditHours * ${amount}) AS invoiceAmount,
+              c.term -- Add the 'term' field here
+          FROM
+              Enrollment e
+          JOIN Student s ON e.studentIDStudentID = s.studentID
+          JOIN Class_Credit_Hours cch ON e.classIDClassID = cch.classID
+          JOIN Class c ON e.classIDClassID = c.classID -- Join with Class to get the term
+          WHERE
+              c.term = '${term}'
+      )
+      SELECT
+          sid,
+          '${description}' AS description,
+          invoiceAmount,
+          term
+      FROM
+          Student_Invoice_Data;
+    `);
+
+    console.log(result);
+
+    // Now you insert the results into the Invoice table
+    for (const row of result) {
+      await this.connection.query(`
+            INSERT INTO Invoice (studentIDStudentID, description, amount, dueDate, term)
+            VALUES (${row.sid}, '${row.description}', ${row.invoiceAmount}, '${dueDate}', '${row.term}');
+        `);
+    }
+
+    return { message: "Success" };
+  }
+
 }
