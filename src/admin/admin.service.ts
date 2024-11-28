@@ -51,6 +51,21 @@ export class AdminService {
       WHERE rq.requestID = ${requestID}
     `);
 
+    if (approved) {
+      const result = await this.connection.query(`
+        SELECT rq.studentIDStudentID, rq.classIDClassID
+        FROM Request rq
+        WHERE rq.requestID = ${requestID}`
+      );
+      
+      const { studentIDStudentID, classIDClassID } = result[0];
+
+      await this.connection.query(`
+        INSERT INTO Enrollment (studentIDStudentID, classIDClassID)
+        VALUES
+          (${studentIDStudentID}, ${classIDClassID})
+      `);
+    }
     return { message: "Success" };
   }
 
@@ -81,12 +96,23 @@ export class AdminService {
       VALUES
         (${classID}, '${body.startTime}', '${body.endTime}', '${body.venue}')
     `);
+
+    await this.connection.query(`
+      INSERT INTO Attendance (studentIDStudentID, scheduleIDScheduleID, present)
+      SELECT 
+          e.studentIDStudentID, 
+          ${data.insertId}, 
+          1 AS present
+      FROM Enrollment e
+      WHERE e.classIDClassID = ${classID};
+    `);
+
     return { message: "Success" };
   }
 
   async enrollStudentToClass(rollNo: string, classID: number) {
     const getID = await this.getNameByRollNo(rollNo);
-    if (getID === -1) return {message: "User Not Found"};
+    if (getID === -1) return { message: "User Not Found" };
     const studentID = getID.studentID;
     const data = await this.connection.query(`
       INSERT INTO Enrollment (studentIDStudentID, classIDClassID)
@@ -98,13 +124,13 @@ export class AdminService {
 
   async getFees(rollNo: string) {
     const getID = await this.getNameByRollNo(rollNo);
-    if (getID === -1) return {message: "User Not Found"};
+    if (getID === -1) return { message: "User Not Found" };
     const studentID = getID.studentID;
     const data = await this.connection.query(`
       SELECT inv.invoiceID, inv.description, inv.amount, inv.term FROM Invoice inv
       WHERE inv.studentIDStudentID = ${studentID} AND inv.amount > 0
     `);
-    return {data};
+    return { data };
   }
 
   async clearFees(invoiceID: number, amount: number) {
@@ -119,7 +145,7 @@ export class AdminService {
 
   async addFeesStudent(data) {
     const getID = await this.getNameByRollNo(data.rollNo);
-    if (getID === -1) return {message: "User Not Found"};
+    if (getID === -1) return { message: "User Not Found" };
     const studentID = getID.studentID;
 
 
@@ -129,6 +155,6 @@ export class AdminService {
         (${studentID}, '${data.description}', ${data.amount}, '${data.term}')
     `);
 
-    return {message: "Success"};
+    return { message: "Success" };
   }
 }
