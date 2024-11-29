@@ -6,6 +6,7 @@ import { Department } from 'src/entities/department.entity';
 import { User } from 'src/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
 
+const currentTerm = "F24";
 @Injectable()
 export class AdminService {
   constructor(
@@ -153,7 +154,7 @@ export class AdminService {
       WHERE inv.invoiceID = ${invoiceID}
     `);
 
-    return {message: "Success"};
+    return { message: "Success" };
   }
 
   async addFeesStudent(data) {
@@ -228,7 +229,7 @@ export class AdminService {
       VALUES
         ('${name}', ${creditHr}, '${mode}')
     `);
-    return {message: "Added Course Successfully"};
+    return { message: "Added Course Successfully" };
   }
 
   async editCourse(courseID: number, name: string, creditHr: number, mode: string) {
@@ -241,13 +242,150 @@ export class AdminService {
       WHERE
         c.courseID = ${courseID}
     `);
-    return {message: "Updated Course Successfully"};
+    return { message: "Updated Course Successfully" };
   }
 
   async deleteCourse(courseID: number) {
     await this.connection.query(`
       DELETE FROM Course WHERE courseID = ${courseID}
     `)
-    return {message: "Deleted Course Successfully"};
+    return { message: "Deleted Course Successfully" };
+  }
+
+  async getPrograms() {
+    return await this.connection.query(`
+      SELECT programID, departmentIDDepartmentID, name FROM Program
+    `);
+  }
+
+  async addUser(
+    name: string,
+    email: string,
+    gender: string,
+    dob: string,
+    phoneNo: string,
+    emergencyNo: string,
+    address: string,
+    departmentID: number,
+    enrollmentDate: string,
+    role: number
+  ) {
+    const data = await this.connection.query(`
+      INSERT INTO User (name, email, gender, dob, phone, emergencyPhone, address, joinDate, departmentIDDepartmentID, role)
+      VALUES
+        ('${name}', '${email}', '${gender}', '${dob}', '${phoneNo}', '${emergencyNo}', '${address}', '${enrollmentDate}', ${departmentID}, ${role})
+    `);
+
+    this.connection.query(`
+      UPDATE User
+      SET username = '${{1: 'student', 2: 'teacher', 3: 'admin'}[role]}-${data.insertId}'
+      WHERE userID = ${data.insertId}
+    `);
+    return data.insertId;
+  }
+
+  async addStudent(
+    name: string,
+    email: string,
+    gender: string,
+    dob: string,
+    phoneNo: string,
+    emergencyNo: string,
+    address: string,
+    departmentID: number,
+    enrollmentDate: string,
+    programID: number
+  ) {
+    const p = await this.connection.query(`
+      SELECT name FROM Program WHERE programID = ${programID}
+    `);
+    const n = p[0].name.split(" ");
+    let x = "";
+    for (let i = 2; i < n.length; i++) {
+      "".toUpperCase()
+      if (n[i][0].toUpperCase() === n[i][0]) {
+        x += n[i][0];
+      }
+    }
+
+    const userID = await this.addUser(name,
+      email,
+      gender,
+      dob,
+      phoneNo,
+      emergencyNo,
+      address,
+      departmentID,
+      enrollmentDate,
+      1);
+
+    const data = await this.connection.query(`
+      INSERT INTO Student (userIDUserID, programIDProgramID, rollNo)
+      VALUES
+        (${userID}, ${programID}, 'BS-${x}-${currentTerm}-${`${userID}`.padStart(3, "0")}')
+    `);
+
+    return { message: "Added Student Successfully" };
+  }
+
+  async getStudentByRoll(rollNo: string) {
+    const data = await this.connection.query(`
+      SELECT u.userID, st.studentID, u.name, u.email, u.gender, Date(u.dob) as dob, u.phone, u.emergencyPhone, u.address, Date(u.joinDate) as enrollmentDate, u.departmentIDDepartmentID as department, st.programIDProgramID as program FROM Student st
+      JOIN User u ON st.userIDUserID = u.userID
+      WHERE st.rollNo = '${rollNo}'
+    `);
+    return data;
+  }
+
+  async deleteStudentByRoll(rollNo: string) {
+    const data = await this.connection.query(`
+      SELECT u.userID FROM Student st
+      JOIN User u ON u.userID = st.userIDUserID
+      WHERE st.rollNo = '${rollNo}'
+    `);
+    const userID = data[0].userID;
+    await this.connection.query(`
+      DELETE FROM User WHERE userID = ${userID}
+    `)
+    return { message: "Deleted Course Successfully" };
+  }
+
+  async editStudent(
+    name: string,
+    email: string,
+    gender: string,
+    dob: string,
+    phoneNo: string,
+    emergencyNo: string,
+    address: string,
+    departmentID: number,
+    enrollmentDate: string,
+    programID: number,
+    userID: number,
+    studentID: number
+  ) {
+    await this.connection.query(`
+      UPDATE User
+      SET
+        name = '${name}',
+        email = '${email}',
+        gender = '${gender}',
+        dob = '${dob}',
+        phone = '${phoneNo}',
+        emergencyPhone = '${emergencyNo}',
+        address = '${address}',
+        departmentIDDepartmentID = ${departmentID},
+        joinDate = '${enrollmentDate}'
+      WHERE userID = ${userID}
+    `);
+
+    await this.connection.query(`
+      UPDATE Student
+      SET
+        programIDProgramID = ${programID}
+      WHERE studentID = ${studentID} AND userIDUserID = ${userID}
+    `);
+
+    return {message: "Updated Student Successfully!"};
   }
 }

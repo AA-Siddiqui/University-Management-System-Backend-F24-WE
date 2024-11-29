@@ -35,13 +35,13 @@ export class AdminController {
 
   @Post('schedule/extra/:classID')
   async postExtraClass(
-    @Param("classID") classID: number, 
+    @Param("classID") classID: number,
     @Body('date') date: string,
     @Body('startTime') startTime: string,
     @Body('endTime') endTime: string,
     @Body('venue') venue: string,
   ) {
-    const body = {date, startTime, endTime, venue};
+    const body = { date, startTime, endTime, venue };
     return await this.adminService.postExtraClass(classID, body);
   }
 
@@ -112,5 +112,78 @@ export class AdminController {
   @Delete('delete/course/:courseID')
   async deleteCourse(@Param('courseID') courseID: number) {
     return await this.adminService.deleteCourse(courseID);
+  }
+
+  @Get('get/programs')
+  async getPrograms() {
+    return await this.adminService.getPrograms();
+  }
+
+  @Post('add/student')
+  async addStudent(
+    @Body('name') name: string,
+    @Body('email') email: string,
+    @Body('gender') gender: string,
+    @Body('dob') dob: string,
+    @Body('phoneNo') phoneNo: string,
+    @Body('emergencyNo') emergencyNo: string,
+    @Body('address') address: string,
+    @Body('departmentID') departmentID: number,
+    @Body('enrollmentDate') enrollmentDate: string,
+    @Body('programID') programID: number
+  ) {
+    return await this.adminService.addStudent(
+      name,
+      email,
+      gender,
+      dob,
+      phoneNo,
+      emergencyNo,
+      address,
+      departmentID,
+      enrollmentDate,
+      programID
+    );
+  }
+
+  @Get('get/student/:rollNo')
+  async getStudentByRoll(@Param('rollNo') rollNo: string) {
+    return await this.adminService.getStudentByRoll(rollNo);
+  }
+
+  @Delete('delete/student/:rollNo')
+  async deleteStudentByRoll(@Param('rollNo') rollNo: string) {
+    return await this.adminService.deleteStudentByRoll(rollNo);
+  }
+
+  @Put('add/student')
+  async editStudent(
+    @Body('userID') userID: number,
+    @Body('studentID') studentID: number,
+    @Body('name') name: string,
+    @Body('email') email: string,
+    @Body('gender') gender: string,
+    @Body('dob') dob: string,
+    @Body('phoneNo') phoneNo: string,
+    @Body('emergencyNo') emergencyNo: string,
+    @Body('address') address: string,
+    @Body('departmentID') departmentID: number,
+    @Body('enrollmentDate') enrollmentDate: string,
+    @Body('programID') programID: number
+  ) {
+    return await this.adminService.editStudent(
+      name,
+      email,
+      gender,
+      dob,
+      phoneNo,
+      emergencyNo,
+      address,
+      departmentID,
+      enrollmentDate,
+      programID,
+      userID,
+      studentID
+    );
   }
 }
