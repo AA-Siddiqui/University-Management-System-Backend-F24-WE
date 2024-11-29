@@ -77,6 +77,13 @@ export class AdminService {
     return data;
   }
 
+  async getCourses() {
+    const data = await this.connection.query(`
+      SELECT c.courseID, c.name, c.creditHr, c.mode FROM Course c
+    `);
+    return data;
+  }
+
   async getNameByRollNo(rollNo: string) {
     const data = await this.connection.query(`
       SELECT u.name, st.studentID FROM Student st
@@ -145,6 +152,8 @@ export class AdminService {
       SET inv.amount = inv.amount - ${amount}${(data[0].amount - amount <= 0) ? ', inv.paidDate = CURDATE()' : ''}
       WHERE inv.invoiceID = ${invoiceID}
     `);
+
+    return {message: "Success"};
   }
 
   async addFeesStudent(data) {
@@ -213,4 +222,32 @@ export class AdminService {
     return { message: "Success" };
   }
 
+  async addCourse(name: string, creditHr: number, mode: string) {
+    await this.connection.query(`
+      INSERT INTO Course (name, creditHr, mode)
+      VALUES
+        ('${name}', ${creditHr}, '${mode}')
+    `);
+    return {message: "Added Course Successfully"};
+  }
+
+  async editCourse(courseID: number, name: string, creditHr: number, mode: string) {
+    await this.connection.query(`
+      UPDATE Course c
+      SET
+        c.name = '${name}',
+        c.creditHr = ${creditHr},
+        c.mode = '${mode}'
+      WHERE
+        c.courseID = ${courseID}
+    `);
+    return {message: "Updated Course Successfully"};
+  }
+
+  async deleteCourse(courseID: number) {
+    await this.connection.query(`
+      DELETE FROM Course WHERE courseID = ${courseID}
+    `)
+    return {message: "Deleted Course Successfully"};
+  }
 }

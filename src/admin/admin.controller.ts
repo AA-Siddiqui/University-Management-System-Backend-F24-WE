@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { AdminService } from './admin.service';
 
 @Controller('admin')
@@ -83,5 +83,34 @@ export class AdminController {
     @Param('dueDate') dueDate: string,
   ) {
     return await this.adminService.generateFeeForTerm(term, amount, description, dueDate);
+  }
+
+  @Post('add/course')
+  async addCourse(
+    @Body('name') name: string,
+    @Body('creditHr') creditHr: number,
+    @Body('mode') mode: string
+  ) {
+    return this.adminService.addCourse(name, creditHr, mode);
+  }
+
+  @Put('add/course')
+  async editCourse(
+    @Body('courseID') courseID: number,
+    @Body('name') name: string,
+    @Body('creditHr') creditHr: number,
+    @Body('mode') mode: string
+  ) {
+    return this.adminService.editCourse(courseID, name, creditHr, mode);
+  }
+
+  @Get('get/course')
+  async getCourses() {
+    return this.adminService.getCourses();
+  }
+
+  @Delete('delete/course/:courseID')
+  async deleteCourse(@Param('courseID') courseID: number) {
+    return await this.adminService.deleteCourse(courseID);
   }
 }
