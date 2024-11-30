@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { InjectConnection, InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { Class } from 'src/entities/class.entity';
-import { Enrollment } from 'src/entities/enrollment.entity';
-import { Schedule } from 'src/entities/schedule.entity';
-import { Student } from 'src/entities/student.entity';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import * as fs from 'fs';
 import { Teacher } from 'src/entities/teacher.entity';
 import { User } from 'src/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
+
 
 @Injectable()
 export class TeacherService {
@@ -72,7 +70,7 @@ export class TeacherService {
       WHERE a.classIDClassID = ${classID}
     `);
 
-    return {data};
+    return { data };
   }
 
   async getActivityData(userID: number, classID: number) {
@@ -93,8 +91,8 @@ export class TeacherService {
         JOIN Assessment a ON s.assessmentIDAssessmentID = a.assessmentID
         WHERE s.studentIDStudentID = ${studentID} AND a.classIDClassID = ${classID}
       `)
-      
-      assessments[i] = {...assessments[i], files: files.map((file) => file.name), submittable: (Number(done.n) === 0), done: (Number(done.n) > 0)}
+
+      assessments[i] = { ...assessments[i], files: files.map((file) => file.name), submittable: (Number(done.n) === 0), done: (Number(done.n) > 0) }
     }
     const courseMaterial = await this.connection.query(`
       SELECT a.assessmentID, a.title, a.description, Date(a.deadline) as date, a.weight FROM Assessment a
@@ -105,10 +103,10 @@ export class TeacherService {
         SELECT af.name FROM Assessment_File af
         WHERE af.assessmentIDAssessmentID = ${courseMaterial[i].assessmentID}
       `)
-      courseMaterial[i] = {...courseMaterial[i], submittable: false, files: files.map((file) => file.name)}
+      courseMaterial[i] = { ...courseMaterial[i], submittable: false, files: files.map((file) => file.name) }
     }
-    
-    return {data: [{title: "Assessment", details: assessments}, {title: "Course Material", details: courseMaterial}]};
+
+    return { data: [{ title: "Assessment", details: assessments }, { title: "Course Material", details: courseMaterial }] };
   }
 
   async getAttendanceListData(userID: number, scheduleID: number) {
@@ -130,7 +128,7 @@ export class TeacherService {
       WHERE s.scheduleID = ${scheduleID}
     `);
 
-    return {headData, bodyData}
+    return { headData, bodyData }
   }
 
   async putAttendanceListData(userID: number, scheduleID: number, studentID: number) {
@@ -160,10 +158,10 @@ export class TeacherService {
       WHERE aa.assessmentID = ${assessmentID}
     `);
 
-    return {headData, bodyData}
+    return { headData, bodyData }
   }
 
-  async putGradeListData(assessmentID: number, body: {studentID: number, marks: number}) {
+  async putGradeListData(assessmentID: number, body: { studentID: number, marks: number }) {
     await this.connection.query(`
       UPDATE Submission s
       SET s.marks = ${body.marks}
@@ -171,5 +169,31 @@ export class TeacherService {
     `);
   }
 
-  // TODO: Activity page
+  async handleAssessment(
+    classID: number,
+    name: string,
+    type: string,
+    deadline: string,
+    weight: number,
+    max: number,
+    description: string,
+    file: Express.Multer.File
+  ) {
+    const assessmentID = (await this.connection.query(`
+      INSERT INTO Assessment (classIDClassID, title, description, deadline, max, weight, type)
+      VALUES
+        (${classID}, '${name}', '${description}', '${deadline.replace('T', ' ') + ':00'}', ${max}, ${weight}, '${type}')
+    `)).insertId;
+
+    const uploadPath = `./assessment/${assessmentID}`;
+    fs.mkdirSync(uploadPath, { recursive: true });
+    const filePath = `${uploadPath}/${file.originalname}`;
+    fs.renameSync(file.path, filePath);
+
+    await this.connection.query(`
+      INSERT INTO Assessment_File (assessmentIDAssessmentID, name)
+      VALUES
+        (${assessmentID}, '${file.filename}')
+    `)
+  }
 }

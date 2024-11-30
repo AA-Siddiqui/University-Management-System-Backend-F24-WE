@@ -23,4 +23,7 @@ export class Assessment {
 
   @Column()
   weight: number;
+
+  @Column()
+  type: string;
 }

@@ -1,8 +1,10 @@
-import { Body, Controller, Get, NotFoundException, Param, Put, Res } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, Post, Put, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { TeacherService } from './teacher.service';
 import { join } from 'path';
 import * as fs from 'fs';
 import { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 
 @Controller('teacher')
 export class TeacherController {
@@ -39,7 +41,7 @@ export class TeacherController {
 
   @Get("course/:classID")
   async getCourseHeader(
-    @Param('classID') classID: number,
+    @Param('classID') classID: number
   ) {
     return this.teacherService.getCourseHeader(classID);
   }
@@ -93,7 +95,38 @@ export class TeacherController {
         res.sendFile(join(filePath, file));
       });
     });
+  }
 
-
+  @Post('add/assessment/:classID')
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: (req, file, callback) => {
+        // const assessmentID = req.params.classID;
+        // const uploadPath = `./assessment/${assessmentID}`;
+        // // Ensure the directory exists
+        // fs.mkdirSync(uploadPath, { recursive: true });
+        // callback(null, uploadPath);
+        callback(null, '');
+      },
+      filename: (req, file, callback) => {
+        callback(null, `${file.originalname}`);
+      },
+    }),
+  }))
+  async addAssessment(
+    @Param('classID') classID: number,
+    @Body('name') name: string,
+    @Body('type') type: string,
+    @Body('deadline') deadline: string,
+    @Body('weight') weight: number,
+    @Body('maximum') max: number,
+    @Body('description') description: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    this.teacherService.handleAssessment(classID, name, type, deadline, weight, max, description, file);
+    if (!file) {
+      return { message: "Uploaded Failed" };
+    }
+    return { message: "Uploaded Successfully" };
   }
 }
