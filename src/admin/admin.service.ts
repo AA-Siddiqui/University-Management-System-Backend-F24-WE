@@ -528,10 +528,19 @@ export class AdminService {
 
     for (let i = 1; i <= 16; i++) {
       for (const schedule of schedules) {
-        await this.connection.query(`
+        const newSchedule = await this.connection.query(`
           INSERT INTO Schedule (classIDClassID, startTime, endTime, venue)
           VALUES
             (${classID}, '${getNthWeekdayAfterToday(schedule.day, i, schedule.startTime)}', '${getNthWeekdayAfterToday(schedule.day, i, schedule.endTime)}', '${schedule.venue}')
+        `);
+        await this.connection.query(`
+          INSERT INTO Attendance (studentIDStudentID, scheduleIDScheduleID, present)
+          SELECT 
+              e.studentIDStudentID, 
+              ${newSchedule.insertId}, 
+              1 AS present
+          FROM Enrollment e
+          WHERE e.classIDClassID = ${classID};
         `);
       }
     }
@@ -603,10 +612,19 @@ export class AdminService {
 
     for (let i = 1; i <= noOfIteration; i++) {
       for (const schedule of schedules) {
-        await this.connection.query(`
+        const newSchedule = await this.connection.query(`
           INSERT INTO Schedule (classIDClassID, startTime, endTime, venue)
           VALUES
             (${classID}, '${getNthWeekdayAfterToday(schedule.day, i, schedule.startTime)}', '${getNthWeekdayAfterToday(schedule.day, i, schedule.endTime)}', '${schedule.venue}')
+        `);
+        await this.connection.query(`
+          INSERT INTO Attendance (studentIDStudentID, scheduleIDScheduleID, present)
+          SELECT 
+              e.studentIDStudentID, 
+              ${newSchedule.insertId}, 
+              1 AS present
+          FROM Enrollment e
+          WHERE e.classIDClassID = ${classID};
         `);
       }
     }
