@@ -258,4 +258,35 @@ export class AdminController {
   async deleteTeacher(@Param('userID') userID: number) {
     return await this.adminService.deleteTeacher(userID);
   }
+
+  @Post('add/class')
+  async addClass(
+    @Body('courseID') courseID: number,
+    @Body('teacherID') teacherID: number,
+    @Body('section') section: string,
+    @Body('schedules') schedules: Array<{day: number, startTime: string, endTime: string, venue: string}>
+  ) {
+    return await this.adminService.addClass(courseID, teacherID, section, schedules);
+  }
+
+  @Put('add/class')
+  async editClass(
+    @Body('classID') classID: number,
+    @Body('courseID') courseID: number,
+    @Body('teacherID') teacherID: number,
+    @Body('section') section: string,
+    @Body('schedules') schedules: Array<{day: number, startTime: string, endTime: string, venue: string}>
+  ) {
+    return await this.adminService.editClass(classID, courseID, teacherID, section, schedules);
+  }
+
+  @Get('get/classes')
+  async getExtendedClasses() {
+    return await this.adminService.getExtendedClasses();
+  }
+
+  @Delete('delete/class/:classID')
+  async deleteClass(@Param('classID') classID: number) {
+    return await this.adminService.deleteClass(classID);
+  }
 }

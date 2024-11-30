@@ -7,6 +7,7 @@ import { User } from 'src/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
 
 const currentTerm = "F24";
+const currentTermFull = "Fall 2024";
 @Injectable()
 export class AdminService {
   constructor(
@@ -278,7 +279,7 @@ export class AdminService {
 
     this.connection.query(`
       UPDATE User
-      SET username = '${{1: 'student', 2: 'teacher', 3: 'admin'}[role]}-${data.insertId}'
+      SET username = '${{ 1: 'student', 2: 'teacher', 3: 'admin' }[role]}-${data.insertId}'
       WHERE userID = ${data.insertId}
     `);
     return data.insertId;
@@ -386,9 +387,9 @@ export class AdminService {
       WHERE studentID = ${studentID} AND userIDUserID = ${userID}
     `);
 
-    return {message: "Updated Student Successfully!"};
+    return { message: "Updated Student Successfully!" };
   }
-  
+
   async addTeacher(
     name: string,
     email: string,
@@ -402,7 +403,7 @@ export class AdminService {
     position: string,
     officeLocation: string
   ) {
-    
+
     const userID = await this.addUser(name,
       email,
       gender,
@@ -461,7 +462,7 @@ export class AdminService {
       WHERE teacherID = ${teacherID} AND userIDUserID = ${userID}
     `);
 
-    return {message: "Updated Teacher Successfully!"};
+    return { message: "Updated Teacher Successfully!" };
   }
 
   async getTeachers() {
@@ -476,5 +477,163 @@ export class AdminService {
       DELETE FROM User WHERE userID = ${userID}
     `)
     return { message: "Deleted Teacher Successfully" };
+  }
+
+  async addClass(
+    courseID: number,
+    teacherID: number,
+    section: string,
+    schedules: Array<{ day: number, startTime: string, endTime: string, venue: string }>
+  ) {
+    function getNthWeekdayAfterToday(targetDay: number, n: number, time: string): string {
+      if (targetDay === undefined) {
+        throw new Error("Invalid weekday");
+      }
+
+      const today = new Date();
+      const currentDay = today.getDay();
+
+      let daysUntilNext = (targetDay - currentDay + 7) % 7;
+      if (daysUntilNext === 0) {
+        daysUntilNext = 7;
+      }
+
+      const date = new Date(today);
+      date.setDate(today.getDate() + daysUntilNext + (n - 1) * 7);
+      date.setHours(time.split(":").map(Number)[0]);
+      date.setMinutes(time.split(":").map(Number)[1]);
+      date.setSeconds(0);
+      date.setMilliseconds(0);
+
+      if (!(date instanceof Date)) {
+        throw new Error("Input must be a Date object");
+      }
+
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+
+    const data = await this.connection.query(`
+      INSERT INTO Class (term, section, teacherIDTeacherID, courseIDCourseID)
+      VALUES
+        ('${currentTermFull}', '${section}', ${teacherID}, ${courseID})
+    `)
+    const classID = data.insertId;
+
+    for (let i = 1; i <= 16; i++) {
+      for (const schedule of schedules) {
+        await this.connection.query(`
+          INSERT INTO Schedule (classIDClassID, startTime, endTime, venue)
+          VALUES
+            (${classID}, '${getNthWeekdayAfterToday(schedule.day, i, schedule.startTime)}', '${getNthWeekdayAfterToday(schedule.day, i, schedule.endTime)}', '${schedule.venue}')
+        `);
+      }
+    }
+
+    return { message: "Added Class Successfully" };
+  }
+
+  async editClass(
+    classID: number,
+    courseID: number,
+    teacherID: number,
+    section: string,
+    schedules: Array<{ day: number, startTime: string, endTime: string, venue: string }>
+  ) {
+    function getNthWeekdayAfterToday(targetDay: number, n: number, time: string): string {
+      if (targetDay === undefined) {
+        throw new Error("Invalid weekday");
+      }
+
+      const today = new Date();
+      const currentDay = today.getDay();
+
+      let daysUntilNext = (targetDay - currentDay + 7) % 7;
+      if (daysUntilNext === 0) {
+        daysUntilNext = 7;
+      }
+
+      const date = new Date(today);
+      date.setDate(today.getDate() + daysUntilNext + (n - 1) * 7);
+      date.setHours(time.split(":").map(Number)[0]);
+      date.setMinutes(time.split(":").map(Number)[1]);
+      date.setSeconds(0);
+      date.setMilliseconds(0);
+
+      if (!(date instanceof Date)) {
+        throw new Error("Input must be a Date object");
+      }
+
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+    await this.connection.query(`
+      UPDATE Class
+      SET
+        courseIDCourseID = ${courseID},
+        teacherIDTeacherID = ${teacherID},
+        section = '${section}'
+      WHERE classID = ${classID}
+    `);
+    const classesDone = (await this.connection.query(`
+      SELECT COUNT(*) AS ClassDone FROM Schedule
+      WHERE classIDClassID = ${classID} 
+      AND Date(startTime) < CURDATE()`))[0].ClassDone;
+    const classesPerWeek = (await this.connection.query(`
+        SELECT DISTINCT DAYOFWEEK(s.startTime) - 1 as day, TIME(s.startTime) as startTime, TIME(s.endTime) as endTime, s.venue FROM Schedule s
+        WHERE s.classIDClassID = ${classID}
+    `)).length;
+    const noOfIteration = (classesPerWeek * 16 - classesDone) / classesPerWeek;
+
+    await this.connection.query(`
+      DELETE FROM Schedule WHERE classIDClassID = ${classID} AND Date(startTime) > CURDATE()
+    `);
+
+    for (let i = 1; i <= noOfIteration; i++) {
+      for (const schedule of schedules) {
+        await this.connection.query(`
+          INSERT INTO Schedule (classIDClassID, startTime, endTime, venue)
+          VALUES
+            (${classID}, '${getNthWeekdayAfterToday(schedule.day, i, schedule.startTime)}', '${getNthWeekdayAfterToday(schedule.day, i, schedule.endTime)}', '${schedule.venue}')
+        `);
+      }
+    }
+    return { message: "Updated Class Successfully" };
+  }
+
+  async getExtendedClasses() {
+    const data = await this.connection.query(`
+      SELECT c.classID, c.term, c.section, cc.name, cc.courseID as course, cc.creditHr FROM Class c
+      JOIN Course cc ON cc.courseID = c.courseIDCourseID
+    `);
+
+    const mData = [];
+    for (let i = 0; i < data.length; i++) {
+      const schedule = await this.connection.query(`
+        SELECT DISTINCT DAYOFWEEK(s.startTime) - 1 as day, TIME(s.startTime) as startTime, TIME(s.endTime) as endTime, s.venue FROM Schedule s
+        WHERE s.classIDClassID = ${data[i].classID}
+      `);
+      mData.push({ ...data[i], schedule });
+    }
+    return mData;
+  }
+
+  async deleteClass(classID: number) {
+    await this.connection.query(`
+      DELETE FROM Class WHERE classID = ${classID}
+    `)
+    return { message: "Deleted Class Successfully" };
   }
 }
