@@ -7,10 +7,10 @@ export class Attendance {
   @PrimaryGeneratedColumn()
   attendanceID: number;
 
-  @ManyToOne(() => Student, (student: Student) => student.studentID)
+  @ManyToOne(() => Student, (student: Student) => student.studentID, { onDelete: 'CASCADE' })
   studentID: number;
 
-  @ManyToOne(() => Schedule, (schedule: Schedule) => schedule.scheduleID)
+  @ManyToOne(() => Schedule, (schedule: Schedule) => schedule.scheduleID, { onDelete: 'CASCADE' })
   scheduleID: number;
 
   @Column({ default: true })

@@ -6,7 +6,7 @@ export class Invoice {
   @PrimaryGeneratedColumn()
   invoiceID: number;
 
-  @ManyToOne(() => Student, (student: Student) => student.studentID)
+  @ManyToOne(() => Student, (student: Student) => student.studentID, { onDelete: 'CASCADE' })
   studentID: number;
 
   @Column()

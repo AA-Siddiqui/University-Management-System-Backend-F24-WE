@@ -6,7 +6,7 @@ export class SubmissionFile {
   @PrimaryGeneratedColumn()
   submissionFileID: number;
 
-  @ManyToOne(() => Submission, (submission: Submission) => submission.submissionID)
+  @ManyToOne(() => Submission, (submission: Submission) => submission.submissionID, { onDelete: 'CASCADE' })
   submissionID: number;
 
   @Column()

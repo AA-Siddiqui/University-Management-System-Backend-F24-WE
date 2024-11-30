@@ -347,7 +347,7 @@ export class AdminService {
     await this.connection.query(`
       DELETE FROM User WHERE userID = ${userID}
     `)
-    return { message: "Deleted Course Successfully" };
+    return { message: "Deleted Student Successfully" };
   }
 
   async editStudent(
@@ -387,5 +387,94 @@ export class AdminService {
     `);
 
     return {message: "Updated Student Successfully!"};
+  }
+  
+  async addTeacher(
+    name: string,
+    email: string,
+    gender: string,
+    dob: string,
+    phoneNo: string,
+    emergencyNo: string,
+    address: string,
+    departmentID: number,
+    hireDate: string,
+    position: string,
+    officeLocation: string
+  ) {
+    
+    const userID = await this.addUser(name,
+      email,
+      gender,
+      dob,
+      phoneNo,
+      emergencyNo,
+      address,
+      departmentID,
+      hireDate,
+      2);
+
+    const data = await this.connection.query(`
+      INSERT INTO Teacher (userIDUserID, officeLocation, position)
+      VALUES
+        (${userID}, '${officeLocation}', '${position}')
+    `);
+
+    return { message: "Added Teacher Successfully" };
+  }
+
+  async editTeacher(
+    name: string,
+    email: string,
+    gender: string,
+    dob: string,
+    phoneNo: string,
+    emergencyNo: string,
+    address: string,
+    departmentID: number,
+    hireDate: string,
+    position: string,
+    officeLocation: string,
+    userID: number,
+    teacherID: number
+  ) {
+    await this.connection.query(`
+      UPDATE User
+      SET
+        name = '${name}',
+        email = '${email}',
+        gender = '${gender}',
+        dob = '${dob}',
+        phone = '${phoneNo}',
+        emergencyPhone = '${emergencyNo}',
+        address = '${address}',
+        departmentIDDepartmentID = ${departmentID},
+        joinDate = '${hireDate}'
+      WHERE userID = ${userID}
+    `);
+
+    await this.connection.query(`
+      UPDATE Teacher
+      SET
+        position = '${position}',
+        officeLocation = '${officeLocation}'
+      WHERE teacherID = ${teacherID} AND userIDUserID = ${userID}
+    `);
+
+    return {message: "Updated Teacher Successfully!"};
+  }
+
+  async getTeachers() {
+    return await this.connection.query(`
+      SELECT u.userID, t.teacherID, u.name, u.username, u.email, u.gender, Date(u.dob) as dob, u.phone, u.emergencyPhone, u.address, Date(u.joinDate) as hireDate, u.departmentIDDepartmentID as department, t.position, t.officeLocation FROM User u
+      JOIN Teacher t ON u.userID = t.userIDUserID
+    `);
+  }
+
+  async deleteTeacher(userID: number) {
+    await this.connection.query(`
+      DELETE FROM User WHERE userID = ${userID}
+    `)
+    return { message: "Deleted Teacher Successfully" };
   }
 }

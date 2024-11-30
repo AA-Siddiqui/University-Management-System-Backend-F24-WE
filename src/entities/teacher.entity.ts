@@ -6,7 +6,7 @@ export class Teacher {
   @PrimaryGeneratedColumn()
   teacherID: number;
 
-  @ManyToOne(() => User, (user: User) => user.userID)
+  @ManyToOne(() => User, (user: User) => user.userID, { onDelete: 'CASCADE' })
   userID: number;
 
   @Column()

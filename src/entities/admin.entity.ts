@@ -6,6 +6,6 @@ export class Admin {
   @PrimaryGeneratedColumn()
   adminID: number;
 
-  @ManyToOne(() => User, (user: User) => user.userID)
+  @ManyToOne(() => User, (user: User) => user.userID, { onDelete: 'CASCADE' })
   userID: number;
 }

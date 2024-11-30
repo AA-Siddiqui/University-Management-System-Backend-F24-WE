@@ -7,10 +7,10 @@ export class Student {
   @PrimaryGeneratedColumn()
   studentID: number;
 
-  @ManyToOne(() => User, (user: User) => user.userID)
+  @ManyToOne(() => User, (user: User) => user.userID, { onDelete: 'CASCADE' })
   userID: number;
 
-  @ManyToOne(() => Program, (program: Program) => program.programID)
+  @ManyToOne(() => Program, (program: Program) => program.programID, { onDelete: 'CASCADE' })
   programID: number;
 
   @Column()

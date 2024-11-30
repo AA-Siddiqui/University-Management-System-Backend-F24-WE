@@ -186,4 +186,76 @@ export class AdminController {
       studentID
     );
   }
+
+  @Post('add/teacher')
+  async addTeacher(
+    @Body('name') name: string,
+    @Body('email') email: string,
+    @Body('gender') gender: string,
+    @Body('dob') dob: string,
+    @Body('phoneNo') phoneNo: string,
+    @Body('emergencyNo') emergencyNo: string,
+    @Body('address') address: string,
+    @Body('departmentID') departmentID: number,
+    @Body('hireDate') hireDate: string,
+    @Body('position') position: string,
+    @Body('officeLocation') officeLocation: string
+  ) {
+    return await this.adminService.addTeacher(
+      name,
+      email,
+      gender,
+      dob,
+      phoneNo,
+      emergencyNo,
+      address,
+      departmentID,
+      hireDate,
+      position,
+      officeLocation
+    );
+  }
+
+  @Put('add/teacher')
+  async editTeacher(
+    @Body('name') name: string,
+    @Body('email') email: string,
+    @Body('gender') gender: string,
+    @Body('dob') dob: string,
+    @Body('phoneNo') phoneNo: string,
+    @Body('emergencyNo') emergencyNo: string,
+    @Body('address') address: string,
+    @Body('departmentID') departmentID: number,
+    @Body('hireDate') hireDate: string,
+    @Body('position') position: string,
+    @Body('officeLocation') officeLocation: string,
+    @Body('userID') userID: number,
+    @Body('teacherID') teacherID: number
+  ) {
+    return await this.adminService.editTeacher(
+      name,
+      email,
+      gender,
+      dob,
+      phoneNo,
+      emergencyNo,
+      address,
+      departmentID,
+      hireDate,
+      position,
+      officeLocation,
+      userID,
+      teacherID
+    );
+  }
+
+  @Get('get/teachers')
+  async getTeachers() {
+    return await this.adminService.getTeachers();
+  }
+
+  @Delete('delete/teacher/:userID')
+  async deleteTeacher(@Param('userID') userID: number) {
+    return await this.adminService.deleteTeacher(userID);
+  }
 }

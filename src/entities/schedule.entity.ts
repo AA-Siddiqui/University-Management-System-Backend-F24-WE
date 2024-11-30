@@ -6,7 +6,7 @@ export class Schedule {
   @PrimaryGeneratedColumn()
   scheduleID: number;
 
-  @ManyToOne(() => Class, (classI: Class) => classI.classID)
+  @ManyToOne(() => Class, (classI: Class) => classI.classID, { onDelete: 'CASCADE' })
   classID: number;
 
   @Column()

@@ -6,7 +6,7 @@ export class AssessmentFile {
   @PrimaryGeneratedColumn()
   assessmentFileID: number;
 
-  @ManyToOne(() => Assessment, (assessment: Assessment) => assessment.assessmentID)
+  @ManyToOne(() => Assessment, (assessment: Assessment) => assessment.assessmentID, { onDelete: 'CASCADE' })
   assessmentID: number;
 
   @Column()
