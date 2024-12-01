@@ -112,25 +112,26 @@ export class StudentController {
     return { message: "Uploaded Successfully" };
   }
 
-  // @Get('download/:assessmentID')
-  // async downloadAssessment(@Param('assessmentID') assessmentID: number, @Res() res: Response) {
-  //   const filePath = join(__dirname, '..', '..', 'assessment', assessmentID.toString());
+  @Get('download/:assessmentID/:filename')
+  async downloadAssessment(@Param('assessmentID') assessmentID: number, @Param('filename') filename: string, @Res() res: Response) {
+    const filePath = path.join(__dirname, '..', '..', 'assessment', assessmentID.toString(), filename);
 
-  //   if (!fs.existsSync(filePath)) {
-  //     throw new NotFoundException('File not found');
-  //   }
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException('File not found');
+    }
+    res.sendFile(filePath);
 
-  //   fs.readdir(filePath, (err, files) => {
-  //     files.forEach(file => {
-  //       if (!fs.existsSync(join(filePath, file))) {
-  //         throw new NotFoundException('File not found');
-  //       }
-  //       res.sendFile(join(filePath, file));
-  //     });
-  //   });
-  // }
+    // fs.readdir(filePath, (err, files) => {
+    //   files.forEach(file => {
+    //     if (!fs.existsSync(join(filePath, file))) {
+    //       throw new NotFoundException('File not found');
+    //     }
+    //   });
+    // });
+  }
+
   @Get('download/:assessmentID')
-  async downloadAssessment(@Param('assessmentID') assessmentID: number, @Res() res: Response) {
+  async downloadAssessments(@Param('assessmentID') assessmentID: number, @Res() res: Response) {
     const filePath = path.join(__dirname, '..', '..', 'assessment', assessmentID.toString());
 
     if (!fs.existsSync(filePath)) {

@@ -4,6 +4,7 @@ import { join } from 'path';
 import * as fs from 'fs';
 import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
+import * as archiver from 'archiver';
 import { diskStorage } from 'multer';
 
 @Controller('teacher')
@@ -81,18 +82,57 @@ export class TeacherController {
     return this.teacherService.putGradeListData(assessmentID, { studentID, marks });
   }
 
-  @Get('course/grade/:submissionID')
-  async getFile(@Param('submissionID') submissionID: number, @Res() res: Response) {
-    const filePath = join(__dirname, '..', '..', 'submission', submissionID.toString());
+  @Get('course/grade/:submissionID&:studentID')
+  async getFile(@Param('submissionID') submissionID: number, @Param('studentID') studentID: number, @Res() res: Response) {
+    // const filePath = join(__dirname, '..', '..', 'submission', submissionID.toString(), studentID.toString());
+    // if (!fs.existsSync(filePath)) {
+    //   throw new NotFoundException("File Not Found");
+    // }
+    // fs.readdir(filePath, (err, files) => {
+    //   files.forEach(file => {
+    //     if (!fs.existsSync(join(filePath, file))) {
+    //       throw new NotFoundException('File not found');
+    //     }
+    //     res.sendFile(join(filePath, file));
+    //   });
+    // });
+    const filePath = join(__dirname, '..', '..', 'submission', (await this.teacherService.getUserIDFromStudentID(studentID)).toString(), submissionID.toString());
+
     if (!fs.existsSync(filePath)) {
-      throw new NotFoundException("File Not Found");
+      throw new NotFoundException('Assessment folder not found');
     }
+
     fs.readdir(filePath, (err, files) => {
-      files.forEach(file => {
-        if (!fs.existsSync(join(filePath, file))) {
-          throw new NotFoundException('File not found');
+      if (err || files.length === 0) {
+        throw new NotFoundException('No files found in the assessment folder');
+      }
+
+      // Set the output file name for the zip file
+      const zipFileName = `assessment_${studentID}.zip`;
+      const zipStream = archiver('zip', {
+        zlib: { level: 9 }, // maximum compression
+      });
+
+      // Set the response headers to download the file as a zip
+      res.attachment(zipFileName);
+
+      // Pipe the archiver output to the response stream
+      zipStream.pipe(res);
+
+      // Add all files in the directory to the zip archive
+      files.forEach((file) => {
+        const filePathWithName = join(filePath, file);
+        if (fs.existsSync(filePathWithName)) {
+          zipStream.file(filePathWithName, { name: file });
         }
-        res.sendFile(join(filePath, file));
+      });
+
+      // Finalize the zip file
+      zipStream.finalize();
+
+      // Error handling for archiver stream
+      zipStream.on('error', (zipErr) => {
+        throw new NotFoundException('Error during file compression');
       });
     });
   }

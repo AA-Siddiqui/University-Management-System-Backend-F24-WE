@@ -326,10 +326,9 @@ export class StudentService {
       const done = await this.connection.query(`
         SELECT COUNT(*) as n from Submission s
         JOIN Assessment a ON s.assessmentIDAssessmentID = a.assessmentID
-        WHERE s.studentIDStudentID = ${studentID} AND a.classIDClassID = ${classID}
+        WHERE s.studentIDStudentID = ${studentID} AND a.classIDClassID = ${classID} AND a.assessmentID = ${assessments[i].assessmentID}
       `)
-      
-      assessments[i] = {...assessments[i], files: files.map((file) => file.name), submittable: (Number(done.n) === 0), done: (Number(done.n) > 0)}
+      assessments[i] = {...assessments[i], files: files.map((file) => file.name), submittable: (Number(done[0].n) === 0), done: (Number(done[0].n) > 0)}
     }
     const courseMaterial = await this.connection.query(`
       SELECT a.assessmentID, a.title, a.description, Date(a.deadline) as date, a.weight FROM Assessment a

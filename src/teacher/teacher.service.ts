@@ -196,4 +196,12 @@ export class TeacherService {
         (${assessmentID}, '${file.filename}')
     `)
   }
+
+  async getUserIDFromStudentID(studentID: number) {
+    return (await this.connection.query(`
+      SELECT u.userID FROM Student s
+      JOIN User u ON u.userID = s.userIDUserID
+      WHERE s.studentID = ${studentID}
+    `))[0].userID;
+  }
 }
