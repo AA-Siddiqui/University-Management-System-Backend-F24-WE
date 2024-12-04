@@ -67,6 +67,19 @@ export class AdminService {
         VALUES
           (${studentIDStudentID}, ${classIDClassID})
       `);
+
+      const scheduleIDs = await this.connection.query(`
+        SELECT scheduleID FROM Schedule
+        WHERE classIDClassID = ${classIDClassID}
+      `);
+
+      for (let i = 0; i < scheduleIDs.length; i++) {
+        await this.connection.query(`
+          INSERT INTO Attendance (studentIDStudentID, scheduleIDScheduleID)
+          VALUES
+            (${studentIDStudentID}, ${scheduleIDs[i].scheduleID})
+        `);
+      }
     }
     return { message: "Success" };
   }

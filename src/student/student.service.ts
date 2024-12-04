@@ -8,7 +8,7 @@ import { Student } from 'src/entities/student.entity';
 import { User } from 'src/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
 
-const currentTerm = "'Summer 2024'";
+const currentTerm = "'Fall 2024'";
 @Injectable()
 export class StudentService {
   constructor(
@@ -148,7 +148,7 @@ export class StudentService {
     const student = await this.studentRespository.findOne({ where: { userID: user.userID } });
 
     const activities = await this.connection.query(
-      `SELECT cc.name as course, a.title as name, a.deadline as time FROM Assessment a
+      `SELECT c.classID, cc.name as course, a.title as name, a.deadline as time FROM Assessment a
       JOIN Class c ON c.classID = a.classIDClassID
       JOIN Enrollment e ON e.classIDClassID = c.classID
       JOIN Course cc ON cc.courseID = c.courseIDCourseID
@@ -270,7 +270,7 @@ export class StudentService {
         SELECT a.present, Date(s.startTime) as date FROM Attendance a
         JOIN Schedule s ON a.scheduleIDScheduleID = s.scheduleID
         JOIN Class c ON c.classID = s.classIDClassID
-        WHERE c.classID = ${classID} AND a.studentIDStudentID = ${studentID}
+        WHERE c.classID = ${classID} AND a.studentIDStudentID = ${studentID} AND Date(s.startTime) <= CURDATE()
     `);
     return { data };
   }

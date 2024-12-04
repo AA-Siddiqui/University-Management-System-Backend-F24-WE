@@ -117,3 +117,41 @@ Enrollment
 Request
 Schedule
 Assessment
+
+INSERT INTO Department (name) 
+VALUES 
+    ('Software Engineering'),
+    ('Computer Science'),
+    ('Information Technology');
+
+INSERT INTO User (departmentIDDepartmentID, name, email, gender, dob, phone, emergencyPhone, address, joinDate, role, username, password)
+VALUES
+    (1, 'John Doe', 'johndoe@example.com', 'Male', '1990-05-15', '1234567890', '0987654321', '123 Main St, Cityville', '2020-01-10', 1, 'student', ''),
+    (1, 'Jane Smith', 'janesmith@example.com', 'Female', '1985-07-20', '1234567891', '0987654322', '456 Maple St, Townsville', '2021-03-15', 2, 'teacher', ''),
+    (1, 'Alice Johnson', 'alicejohnson@example.com', 'Female', '1993-02-25', '1234567892', '0987654323', '789 Oak St, Villageville', '2019-09-01', 3, 'admin', ''),
+    (1, 'Cat Johnson', 'alicejohnson@example.com', 'Female', '1993-02-25', '1234567892', '0987654323', '789 Oak St, Villageville', '2019-09-01', 1, 'student0', '');
+    
+INSERT INTO Program (name, level, departmentIDDepartmentID, totalCreditHrs) 
+VALUES 
+    ('Bachelors of Software Engineering', 'Bachelor', 1, 133),
+    ('Bachelors of Artificial Intelligence', 'Bachelor', 1, 133),
+    ('Bachelors of Computer Science', 'Bachelor', 2, 133);
+
+INSERT INTO Admin (userIDUserID)
+VALUES
+    (3);
+
+INSERT INTO Teacher (userIDUserID, position, officeLocation)
+VALUES
+    (2, 'Lecturer', 'Office 1');
+
+INSERT INTO Student (userIDUserID, programIDProgramID, rollNo)
+VALUES
+    (1, 1, 'BS-SE-F24-001'),
+    (4, 2, 'BS-AI-F24-001');
+
+INSERT INTO Course (name, creditHr, mode)
+VALUES 
+    ('PF (Theory)', 3, 'Lecture'),
+    ('PF (Lab)', 1, 'Lab'),
+    ('Web Engineering', 3, 'Lecture');
