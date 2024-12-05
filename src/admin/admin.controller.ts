@@ -264,9 +264,10 @@ export class AdminController {
     @Body('courseID') courseID: number,
     @Body('teacherID') teacherID: number,
     @Body('section') section: string,
+    @Body('term') term: string,
     @Body('schedules') schedules: Array<{day: number, startTime: string, endTime: string, venue: string}>
   ) {
-    return await this.adminService.addClass(courseID, teacherID, section, schedules);
+    return await this.adminService.addClass(courseID, teacherID, section, term, schedules);
   }
 
   @Put('add/class')

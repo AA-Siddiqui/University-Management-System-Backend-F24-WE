@@ -496,6 +496,7 @@ export class AdminService {
     courseID: number,
     teacherID: number,
     section: string,
+    term: string,
     schedules: Array<{ day: number, startTime: string, endTime: string, venue: string }>
   ) {
     function getNthWeekdayAfterToday(targetDay: number, n: number, time: string): string {
@@ -535,7 +536,7 @@ export class AdminService {
     const data = await this.connection.query(`
       INSERT INTO Class (term, section, teacherIDTeacherID, courseIDCourseID)
       VALUES
-        ('${currentTermFull}', '${section}', ${teacherID}, ${courseID})
+        ('${term}', '${section}', ${teacherID}, ${courseID})
     `)
     const classID = data.insertId;
 
