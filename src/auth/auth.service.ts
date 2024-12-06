@@ -1,13 +1,13 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import { User } from 'src/entities/user.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService, @InjectRepository(User) private readonly userRespository: Repository<User>) {}
+  constructor(private jwtService: JwtService, @InjectRepository(User) private readonly userRespository: Repository<User>, @InjectDataSource() private readonly connection: DataSource) {}
 
   async validateUser(username: string, password: string): Promise<any> {
     const user = await this.findUser(username);
@@ -36,5 +36,14 @@ export class AuthService {
     // ]
     // const user = mockUsersfitr((user) => username === user.username)[0];
     return user;
+  }
+
+  async reset(username: string, password: string, oldPassword: string) {
+    await this.connection.query(`
+      UPDATE User
+      SET password = ${password}
+      WHERE password = ${oldPassword} AND username = ${username}
+    `);
+    return {message: "Password Changed Successfully"};
   }
 }

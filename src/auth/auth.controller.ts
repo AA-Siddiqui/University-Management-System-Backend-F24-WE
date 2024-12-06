@@ -14,6 +14,11 @@ export class AuthController {
     return ret;
   }
 
+  @Post('reset')
+  async reset(@Body() body: { username: string, password: string, oldPassword: string }) {
+    return await this.authService.reset(body.username, body.password, body.oldPassword);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Req() req) {
