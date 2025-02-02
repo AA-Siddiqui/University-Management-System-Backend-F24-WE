@@ -48,10 +48,10 @@ const entityList = [
   imports: [
     TypeOrmModule.forRoot({
       type: 'mysql',
-      host: 'bak7cu4mmc58rpxv2bew-mysql.services.clever-cloud.com',
+      host: 'localhost',
       port: 3306,
-      username: 'bak7cu4mmc58rpxv2bew',
-      password: process.env.DB_PASSWORD,
+      username: 'root',
+      password: '',
       database: 'project_ums',
       // entities: [__dirname + '//*.entity{.ts,.js}'],
       // entities: [
